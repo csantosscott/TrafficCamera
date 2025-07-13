@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Basic camera test script for Arducam IMX477 on Raspberry Pi
+Basic camera test script for Arducam IMX477 on Raspberry Pi (Python 3.7 compatible)
 """
 
 import os
@@ -8,11 +8,10 @@ import time
 from datetime import datetime
 
 try:
-    from picamera2 import Picamera2, Preview
-    from picamera2.encoders import JpegEncoder
-    from picamera2.outputs import FileOutput
+    import picamera
+    from picamera import PiCamera
 except ImportError:
-    print("Error: picamera2 not found. Please run setup_camera.sh first.")
+    print("Error: picamera not found. Please run setup_camera.sh first.")
     print("If you're not on a Raspberry Pi, this script won't work.")
     exit(1)
 
@@ -20,64 +19,56 @@ def test_camera():
     """Test basic camera functionality"""
     print("Initializing Arducam IMX477 camera...")
     
+    camera = None
     try:
         # Create camera instance
-        picam2 = Picamera2()
+        camera = PiCamera()
         
-        # Print camera properties
-        print("\nCamera properties:")
-        print(f"Camera model: {picam2.camera_properties.get('Model', 'Unknown')}")
-        print(f"Sensor modes available: {len(picam2.sensor_modes)}")
+        # Set camera resolution for IMX477
+        camera.resolution = (4056, 3040)  # Full resolution
         
-        # Configure camera for high quality still images
-        config = picam2.create_still_configuration(
-            main={"size": (4056, 3040)},  # Full resolution for IMX477
-            lores={"size": (1012, 760)},   # Low res for preview
-            display="lores"
-        )
+        print("\nCamera initialized successfully!")
+        print("Resolution: {}".format(camera.resolution))
+        print("Framerate: {}".format(camera.framerate))
         
-        picam2.configure(config)
-        
-        print("\nCamera configured successfully!")
-        print(f"Main stream resolution: {config['main']['size']}")
-        print(f"Preview stream resolution: {config['lores']['size']}")
-        
-        # Start camera
-        picam2.start()
-        print("\nCamera started. Warming up for 2 seconds...")
+        # Allow camera to warm up
+        print("\nWarming up camera for 2 seconds...")
+        camera.start_preview()
         time.sleep(2)
         
         # Take a test photo
         timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-        filename = f"test_photo_{timestamp}.jpg"
+        filename = "test_photo_{}.jpg".format(timestamp)
         
-        print(f"\nCapturing test photo: {filename}")
-        picam2.capture_file(filename)
+        print("\nCapturing test photo: {}".format(filename))
+        camera.capture(filename)
+        camera.stop_preview()
         
         # Get file info
         if os.path.exists(filename):
             file_size = os.path.getsize(filename) / (1024 * 1024)  # MB
-            print(f"Photo saved successfully!")
-            print(f"File size: {file_size:.2f} MB")
-            print(f"Location: {os.path.abspath(filename)}")
+            print("Photo saved successfully!")
+            print("File size: {:.2f} MB".format(file_size))
+            print("Location: {}".format(os.path.abspath(filename)))
         else:
             print("Error: Photo file not created")
-        
-        # Stop camera
-        picam2.stop()
-        picam2.close()
+            return False
+            
         print("\nCamera test completed successfully!")
+        return True
         
     except Exception as e:
-        print(f"\nError during camera test: {str(e)}")
+        print("\nError during camera test: {}".format(str(e)))
         print("\nTroubleshooting tips:")
         print("1. Ensure camera is properly connected to CSI port")
         print("2. Run 'sudo raspi-config' and enable camera interface")
         print("3. Reboot after enabling camera")
-        print("4. Check camera with 'libcamera-hello' command")
+        print("4. Check camera with 'raspistill -o test.jpg' command")
         return False
     
-    return True
+    finally:
+        if camera:
+            camera.close()
 
 if __name__ == "__main__":
     print("Arducam IMX477 Camera Test")

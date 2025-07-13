@@ -1,4 +1,4 @@
-# Camera libraries for Raspberry Pi
-picamera2==0.3.12
-numpy==1.24.3
-Pillow==9.5.0
+# Camera libraries for Raspberry Pi (Python 3.7 compatible)
+picamera==1.13
+numpy==1.19.5
+Pillow==7.2.0

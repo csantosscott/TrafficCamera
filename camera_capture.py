@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Camera capture module for license plate photography
+Camera capture module for license plate photography (Python 3.7 compatible)
 """
 
 import os
@@ -9,11 +9,10 @@ from datetime import datetime
 from pathlib import Path
 
 try:
-    from picamera2 import Picamera2
-    from picamera2.encoders import JpegEncoder
-    from picamera2.outputs import FileOutput
+    import picamera
+    from picamera import PiCamera
 except ImportError:
-    print("Error: picamera2 not found. Please run setup_camera.sh first.")
+    print("Error: picamera not found. Please run setup_camera.sh first.")
     exit(1)
 
 class CameraController:
@@ -34,28 +33,32 @@ class CameraController:
         """Initialize and configure the camera"""
         try:
             print("Initializing camera...")
-            self.camera = Picamera2()
+            self.camera = PiCamera()
             
             # Configure for high quality capture optimized for license plates
             # Using 2028x1520 for balance between quality and file size
-            config = self.camera.create_still_configuration(
-                main={"size": (2028, 1520)},
-                lores={"size": (640, 480)},
-                display="lores"
-            )
+            self.camera.resolution = (2028, 1520)
             
-            self.camera.configure(config)
-            self.camera.start()
+            # Set additional camera properties for better image quality
+            self.camera.iso = 100  # Low ISO for less noise
+            self.camera.sharpness = 0
+            self.camera.contrast = 0
+            self.camera.brightness = 50
+            self.camera.saturation = 0
+            
+            # Start preview to allow camera to adjust
+            self.camera.start_preview()
             
             # Allow camera to warm up
             time.sleep(2)
             
             self.is_initialized = True
             print("Camera initialized successfully")
+            print("Resolution: {}".format(self.camera.resolution))
             return True
             
         except Exception as e:
-            print(f"Failed to initialize camera: {str(e)}")
+            print("Failed to initialize camera: {}".format(str(e)))
             self.is_initialized = False
             return False
     
@@ -75,23 +78,23 @@ class CameraController:
         try:
             # Generate filename with timestamp
             timestamp = datetime.now().strftime("%Y%m%d_%H%M%S_%f")[:-3]  # Include milliseconds
-            filename = f"{filename_prefix}_{timestamp}.jpg"
+            filename = "{}_{}.jpg".format(filename_prefix, timestamp)
             filepath = self.photo_dir / filename
             
             # Capture the photo
-            self.camera.capture_file(str(filepath))
+            self.camera.capture(str(filepath), quality=95)  # High quality JPEG
             
             # Verify file was created
             if filepath.exists():
                 file_size_kb = filepath.stat().st_size / 1024
-                print(f"Photo captured: {filename} ({file_size_kb:.1f} KB)")
+                print("Photo captured: {} ({:.1f} KB)".format(filename, file_size_kb))
                 return filepath
             else:
                 print("Error: Photo file not created")
                 return None
                 
         except Exception as e:
-            print(f"Error capturing photo: {str(e)}")
+            print("Error capturing photo: {}".format(str(e)))
             return None
     
     def capture_burst(self, count=3, delay=0.5, filename_prefix="burst"):
@@ -110,29 +113,29 @@ class CameraController:
             return []
             
         captured_photos = []
-        print(f"Capturing {count} photos with {delay}s delay...")
+        print("Capturing {} photos with {}s delay...".format(count, delay))
         
         for i in range(count):
-            photo_path = self.capture_photo(f"{filename_prefix}_{i+1}")
+            photo_path = self.capture_photo("{}_{}".format(filename_prefix, i+1))
             if photo_path:
                 captured_photos.append(photo_path)
             
             if i < count - 1:  # Don't delay after last photo
                 time.sleep(delay)
         
-        print(f"Burst capture complete. Captured {len(captured_photos)} photos.")
+        print("Burst capture complete. Captured {} photos.".format(len(captured_photos)))
         return captured_photos
     
     def cleanup(self):
         """Clean up camera resources"""
         if self.camera and self.is_initialized:
             try:
-                self.camera.stop()
+                self.camera.stop_preview()
                 self.camera.close()
                 self.is_initialized = False
                 print("Camera cleaned up")
             except Exception as e:
-                print(f"Error during cleanup: {str(e)}")
+                print("Error during cleanup: {}".format(str(e)))
 
 def main():
     """Test the camera capture functionality"""
@@ -148,7 +151,7 @@ def main():
         print("\nTesting single photo capture...")
         photo_path = camera.capture_photo("license_plate")
         if photo_path:
-            print(f"Photo saved to: {photo_path}")
+            print("Photo saved to: {}".format(photo_path))
         
         # Wait a moment
         time.sleep(1)
@@ -156,7 +159,7 @@ def main():
         # Burst capture
         print("\nTesting burst capture...")
         burst_photos = camera.capture_burst(count=3, delay=0.5)
-        print(f"Burst photos saved: {len(burst_photos)} files")
+        print("Burst photos saved: {} files".format(len(burst_photos)))
         
     finally:
         # Always cleanup

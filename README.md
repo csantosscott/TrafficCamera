@@ -52,7 +52,34 @@ Phase 1 has been completed with the following components:
 Phase 2 will implement Docker containerization for the application.
 
 ## Troubleshooting:
+
+### Camera Memory Issues (ENOSPC):
+If you get "ENOSPC" or "Out of resources" errors:
+
+1. **Run the fix script**:
+   ```bash
+   ./fix_camera_memory.sh
+   ```
+
+2. **Or manually increase GPU memory**:
+   ```bash
+   sudo nano /boot/config.txt
+   # Add or modify: gpu_mem=128
+   sudo reboot
+   ```
+
+3. **Run diagnostics**:
+   ```bash
+   ./camera_diagnostics.py
+   ```
+
+4. **Test with minimal settings**:
+   ```bash
+   ./test_camera_minimal.py
+   ```
+
+### General Issues:
 - Ensure camera is enabled in raspi-config
 - Check camera connection to CSI port
-- Verify with `libcamera-hello` command
+- Verify with `raspistill -o test.jpg`
 - Reboot after any camera configuration changes

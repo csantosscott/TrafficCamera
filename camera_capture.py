@@ -36,8 +36,9 @@ class CameraController:
             self.camera = PiCamera()
             
             # Configure for high quality capture optimized for license plates
-            # Using 2028x1520 for balance between quality and file size
-            self.camera.resolution = (2028, 1520)
+            # Start with lower resolution to avoid memory issues
+            # Can be increased if system has enough GPU memory
+            self.camera.resolution = (1920, 1080)  # 1080p for memory efficiency
             
             # Set additional camera properties for better image quality
             self.camera.iso = 100  # Low ISO for less noise
@@ -46,8 +47,9 @@ class CameraController:
             self.camera.brightness = 50
             self.camera.saturation = 0
             
-            # Start preview to allow camera to adjust
-            self.camera.start_preview()
+            # Skip preview on systems with limited memory
+            # Uncomment if you have enough GPU memory (128MB+)
+            # self.camera.start_preview()
             
             # Allow camera to warm up
             time.sleep(2)

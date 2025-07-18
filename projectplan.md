@@ -21,16 +21,16 @@ Create a Docker container application for Raspberry Pi (Buster Release 10) with 
 ### Phase 2: Docker Environment Setup
 
 #### TODO Items:
-- [ ] Create Dockerfile for the application
+- [ ] Use the filebowser docker image for the application
 - [ ] Configure Docker to access camera hardware (privileged mode/device mapping)
 - [ ] Create docker-compose.yml for easy deployment
 - [ ] Test camera access from within Docker container
-- [ ] Implement volume mapping for photo storage
+- [ ] Assign a local storage directory in the pi for the Docker container to use
 
 ### Phase 3: Application Structure
 
 #### TODO Items:
-- [ ] Create main application structure
+- [ ] Test the filebrowser UI container with the camera.(Check with me on this step)
 - [ ] Implement camera module with configurable settings
 - [ ] Create photo storage management (file naming, directory structure)
 - [ ] Add basic logging functionality

@@ -21,7 +21,7 @@ echo ""
 # Install system dependencies
 echo "Installing system dependencies..."
 sudo apt-get update
-sudo apt-get install -y python3-pip python3-venv python3-picamera
+sudo apt-get install -y python3-pip python3-venv python3-picamera2 libcamera-apps
 
 # Create Python virtual environment
 echo "Creating Python virtual environment..."

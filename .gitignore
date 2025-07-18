@@ -1,0 +1,56 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+venv/
+env/
+ENV/
+.venv
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Project specific
+CLAUDE.md
+photos/*.jpg
+photos/*.jpeg
+photos/*.png
+photos/*.mp4
+*.log
+
+# Docker/FileBrowser
+filebrowser.db
+.filebrowser.json.local
+
+# Environment variables (keeping .env for FileBrowser default login)
+# .env is tracked to provide default FileBrowser credentials
+
+# System files
+.DS_Store
+Thumbs.db
+
+# Temporary files
+*.tmp
+*.temp
+.cache/
+
+# Backup files
+*.bak
+*.backup
+
+# Private configuration
+config/private/
+config/secrets/
+
+# Test outputs
+test_*.jpg
+test_*.png
+
+# Camera diagnostics output
+camera_test_*.jpg

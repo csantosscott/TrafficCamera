@@ -1,0 +1,24 @@
+version: '3.8'
+
+services:
+  filebrowser:
+    image: filebrowser/filebrowser:latest
+    container_name: traffic_camera_filebrowser
+    restart: unless-stopped
+    ports:
+      - "8080:80"
+    volumes:
+      - ./photos:/srv/photos
+      - ./config:/srv/config
+      - ./src:/srv/src
+      - ./filebrowser.db:/database.db
+      - ./.filebrowser.json:/.filebrowser.json
+    environment:
+      - PUID=1000
+      - PGID=1000
+    # Camera device mapping for future use when camera support is added
+    # devices:
+    #   - /dev/vchiq:/dev/vchiq
+    #   - /dev/vcsm-cma:/dev/vcsm-cma
+    # privileged: true
+    command: --database /database.db --config /.filebrowser.json

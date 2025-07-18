@@ -1,0 +1,21 @@
+{
+  "port": 80,
+  "baseURL": "/",
+  "address": "0.0.0.0",
+  "log": "stdout",
+  "database": "/database.db",
+  "root": "/srv",
+  "username": "admin",
+  "password": "admin",
+  "branding": {
+    "name": "Traffic Camera File Manager",
+    "disableExternal": false
+  },
+  "auth": {
+    "method": "password"
+  },
+  "commands": {
+    "before_save": [],
+    "after_save": []
+  }
+}

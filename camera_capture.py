@@ -127,11 +127,11 @@ class CameraController:
             now = datetime.now()
             timestamp = now.strftime("%Y%m%d_%H%M%S_%f")[:-3]  # Include milliseconds
             
-            # Create date-based directory structure if requested
+            # Create year-based directory structure if requested
             if organize_by_date:
-                date_dir = self.photo_dir / now.strftime("%Y") / now.strftime("%m") / now.strftime("%d")
-                date_dir.mkdir(parents=True, exist_ok=True)
-                save_dir = date_dir
+                year_dir = self.photo_dir / now.strftime("%Y")
+                year_dir.mkdir(exist_ok=True)
+                save_dir = year_dir
             else:
                 save_dir = self.photo_dir
             
@@ -237,6 +237,7 @@ def main():
             # Show directory structure
             relative_path = photo_path.relative_to(Path("photos"))
             print("📂 Organized path: photos/{}".format(relative_path))
+            print("📅 Year-based organization with full datetime in filename")
         else:
             print("\n❌ Photo capture failed")
             return 1

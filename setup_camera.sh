@@ -22,7 +22,7 @@ echo ""
 # Install system dependencies for Bookworm first
 echo "Installing system dependencies for Bookworm..."
 sudo apt-get update
-sudo apt-get install -y python3-pip python3-venv python3-picamera2 libcamera-apps libcamera-dev
+sudo apt-get install -y python3-pip python3-venv python3-picamera2 libcamera-apps libcamera-dev libcap-dev
 
 # Create photos directory
 echo "Creating photos directory..."

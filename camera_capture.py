@@ -52,9 +52,8 @@ class CameraController:
                     "ExposureTime": 15000,    # 15ms for max quality
                     "AnalogueGain": 1.0,      # Minimal gain
                     "Sharpness": 1.0,         # Natural sharpness
-                    "NoiseReductionMode": 2,  # High quality noise reduction
-                    # Focus controls for IMX477 (manual focus as fallback)
-                    "LensPosition": 3.0       # Manual focus for license plates (3-10m distance)
+                    "NoiseReductionMode": 2   # High quality noise reduction
+                    # Note: Focus must be set manually on lens for now
                 }
                 print("Mode: High Quality (4056x3040)")
                 
@@ -67,9 +66,8 @@ class CameraController:
                 controls = {
                     "ExposureTime": 5000,     # 5ms fast shutter
                     "AnalogueGain": 2.0,      # Higher gain for speed
-                    "NoiseReductionMode": 0,  # No noise reduction for speed
-                    # Focus controls for IMX477 (manual focus as fallback)
-                    "LensPosition": 2.0       # Manual focus for closer subjects
+                    "NoiseReductionMode": 0   # No noise reduction for speed
+                    # Note: Focus must be set manually on lens for now
                 }
                 print("Mode: Fast Capture (1920x1080)")
                 
@@ -84,9 +82,8 @@ class CameraController:
                     "AnalogueGain": 1.5,      # Slight gain for sensitivity
                     "Sharpness": 1.2,         # Enhanced sharpness for text
                     "Contrast": 1.1,          # Slightly increased contrast
-                    "NoiseReductionMode": 1,  # Minimal noise reduction
-                    # Focus controls for IMX477 - optimized for license plates
-                    "LensPosition": 3.5       # Manual focus optimal for 3-10m license plate distance
+                    "NoiseReductionMode": 1   # Minimal noise reduction
+                    # Note: Focus must be set manually on lens for now
                 }
                 print("Mode: Production (2028x1520) - Optimized for license plates")
             
@@ -103,12 +100,13 @@ class CameraController:
             print("Camera warming up and stabilizing...")
             time.sleep(2)
             
-            # Camera is now ready with manual focus set
-            print("Camera ready with manual focus positioning...")
+            # Camera is now ready (focus must be set manually on lens)
+            print("⚠️  Focus: Please manually adjust lens focus ring for optimal sharpness")
+            print("   Recommended: Set focus to 3-10 meters for license plate capture")
             time.sleep(1)  # Allow settings to stabilize
             
             self.is_initialized = True
-            print("Camera initialized successfully with manual focus")
+            print("Camera initialized successfully - MANUAL FOCUS REQUIRED")
             print("Configuration: {}".format(still_config))
             print("Controls applied: {}".format(controls))
             return True
@@ -119,15 +117,14 @@ class CameraController:
             return False
     
     def ensure_focus(self):
-        """Ensure camera focus is ready (manual focus already set)"""
+        """Remind user about manual focus (no software control available)"""
         if not self.is_initialized:
             return False
             
         try:
-            # Manual focus is already set via LensPosition
-            # Just ensure camera is stable
-            print("📷 Focus: Manual position set")
-            time.sleep(0.2)  # Brief stabilization
+            # Manual focus must be set on lens itself
+            print("📷 Focus: Manual lens adjustment required")
+            time.sleep(0.1)  # Brief pause
             return True
         except Exception as e:
             print("⚠️  Focus check failed: {}".format(str(e)))

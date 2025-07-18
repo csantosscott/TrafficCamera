@@ -52,7 +52,11 @@ class CameraController:
                     "ExposureTime": 15000,    # 15ms for max quality
                     "AnalogueGain": 1.0,      # Minimal gain
                     "Sharpness": 1.0,         # Natural sharpness
-                    "NoiseReductionMode": 2   # High quality noise reduction
+                    "NoiseReductionMode": 2,  # High quality noise reduction
+                    # Autofocus controls for IMX477
+                    "AfMode": 2,              # Continuous autofocus
+                    "AfTrigger": 0,           # Trigger autofocus
+                    "LensPosition": 3.0       # Backup manual focus for license plates
                 }
                 print("Mode: High Quality (4056x3040)")
                 
@@ -65,7 +69,11 @@ class CameraController:
                 controls = {
                     "ExposureTime": 5000,     # 5ms fast shutter
                     "AnalogueGain": 2.0,      # Higher gain for speed
-                    "NoiseReductionMode": 0   # No noise reduction for speed
+                    "NoiseReductionMode": 0,  # No noise reduction for speed
+                    # Autofocus controls for IMX477
+                    "AfMode": 1,              # Single-shot autofocus (faster)
+                    "AfTrigger": 0,           # Trigger autofocus
+                    "LensPosition": 2.0       # Slightly closer focus for speed
                 }
                 print("Mode: Fast Capture (1920x1080)")
                 
@@ -80,7 +88,11 @@ class CameraController:
                     "AnalogueGain": 1.5,      # Slight gain for sensitivity
                     "Sharpness": 1.2,         # Enhanced sharpness for text
                     "Contrast": 1.1,          # Slightly increased contrast
-                    "NoiseReductionMode": 1   # Minimal noise reduction
+                    "NoiseReductionMode": 1,  # Minimal noise reduction
+                    # Autofocus controls for IMX477 - optimized for license plates
+                    "AfMode": 2,              # Continuous autofocus
+                    "AfTrigger": 0,           # Trigger autofocus
+                    "LensPosition": 3.5       # Optimal for 3-10m license plate distance
                 }
                 print("Mode: Production (2028x1520) - Optimized for license plates")
             
@@ -95,10 +107,15 @@ class CameraController:
             
             # Allow camera to warm up and stabilize
             print("Camera warming up and stabilizing...")
-            time.sleep(3)
+            time.sleep(2)
+            
+            # Trigger initial autofocus
+            print("Triggering initial autofocus...")
+            self.picam2.set_controls({"AfTrigger": 1})  # Start autofocus
+            time.sleep(1)  # Allow focus to complete
             
             self.is_initialized = True
-            print("Camera initialized successfully")
+            print("Camera initialized successfully with autofocus")
             print("Configuration: {}".format(still_config))
             print("Controls applied: {}".format(controls))
             return True
@@ -107,6 +124,33 @@ class CameraController:
             print("Failed to initialize camera: {}".format(str(e)))
             self.is_initialized = False
             return False
+    
+    def ensure_focus(self):
+        """Ensure camera is properly focused before capture"""
+        if not self.is_initialized:
+            return False
+            
+        try:
+            # Trigger autofocus before capture
+            self.picam2.set_controls({"AfTrigger": 1})
+            time.sleep(0.5)  # Allow autofocus to complete
+            
+            # Get focus state (if supported)
+            metadata = self.picam2.capture_metadata()
+            if "AfState" in metadata:
+                af_state = metadata["AfState"]
+                if af_state == 2:  # Focused
+                    print("📷 Focus: Locked")
+                elif af_state == 1:  # Scanning
+                    print("📷 Focus: Scanning...")
+                    time.sleep(0.5)  # Wait a bit more
+                else:
+                    print("📷 Focus: Manual/Idle")
+            
+            return True
+        except Exception as e:
+            print("⚠️  Focus check failed: {}".format(str(e)))
+            return True  # Continue anyway
     
     def capture_photo(self, filename_prefix="traffic_camera", organize_by_date=True):
         """Capture a photo and save to disk with timestamp and optional date organization
@@ -143,6 +187,10 @@ class CameraController:
                 now.strftime("%H%M%S_%f")[:-3]  # Include milliseconds
             )
             filepath = save_dir / filename
+            
+            # Ensure proper focus before capture
+            print("Ensuring focus...")
+            self.ensure_focus()
             
             # Capture the photo using picamera2
             print("Capturing: {}".format(filename))

@@ -45,14 +45,25 @@ def check_picamera2_status():
         from picamera2 import Picamera2
         import picamera2
         print("✅ picamera2 successfully imported in diagnostics")
-        print("Version: {}".format(picamera2.__version__))
         print("Location: {}".format(picamera2.__file__))
+        
+        # Try to get version info if available
+        try:
+            print("Version: {}".format(picamera2.__version__))
+        except AttributeError:
+            # Check system package version instead
+            pkg_version = run_command("dpkg -l python3-picamera2 | grep python3-picamera2 | awk '{print $3}' 2>/dev/null || echo 'unknown'")
+            if pkg_version and pkg_version != "unknown":
+                print("Package version: {}".format(pkg_version))
+            else:
+                print("Version: Available (no version attribute)")
+        
         return True
     except ImportError as e:
         print("❌ picamera2 import failed in diagnostics: {}".format(e))
         
         # Test system python separately
-        test_system = run_command("python3 -c 'import picamera2; print(picamera2.__version__, picamera2.__file__)' 2>/dev/null || echo 'failed'")
+        test_system = run_command("python3 -c 'import picamera2; print(picamera2.__file__)' 2>/dev/null || echo 'failed'")
         if "failed" not in test_system:
             print("✅ But system python3 can import picamera2:")
             print("  {}".format(test_system))

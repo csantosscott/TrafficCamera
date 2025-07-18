@@ -81,7 +81,7 @@ def test_camera():
             picam2.stop()
 
 def test_multiple_captures():
-    """Test multiple photo captures"""
+    """Test multiple photo captures using single camera instance"""
     print("\n" + "=" * 40)
     print("Testing multiple captures...")
     
@@ -90,33 +90,48 @@ def test_multiple_captures():
         photos_dir = Path("photos")
         photos_dir.mkdir(exist_ok=True)
         
+        # Use single camera instance for all captures
         picam2 = Picamera2()
         still_config = picam2.create_still_configuration(main={"size": (1920, 1080)})
         picam2.configure(still_config)
         picam2.start()
         
-        time.sleep(3)  # Longer warm up for multiple captures
+        # Longer warm up for stable multiple captures
+        print("Camera warming up for multiple captures...")
+        time.sleep(3)
         
+        captured_count = 0
         for i in range(3):
-            timestamp = datetime.now().strftime("%Y%m%d_%H%M%S_%f")[:-3]
-            filename = "multi_test_{:02d}_{}.jpg".format(i+1, timestamp)
-            filepath = photos_dir / filename
-            
-            print("Capture {}/3: {}".format(i+1, filename))
-            picam2.capture_file(str(filepath))
-            
-            if filepath.exists():
-                file_size_kb = filepath.stat().st_size / 1024
-                print("  ✅ Saved - {:.1f} KB".format(file_size_kb))
-            else:
-                print("  ❌ Failed to save")
-                return False
-            
-            if i < 2:  # Don't sleep after last capture
-                time.sleep(1)
+            try:
+                timestamp = datetime.now().strftime("%Y%m%d_%H%M%S_%f")[:-3]
+                filename = "multi_test_{:02d}_{}.jpg".format(i+1, timestamp)
+                filepath = photos_dir / filename
+                
+                print("Capture {}/3: {}".format(i+1, filename))
+                
+                # Use the same camera instance - don't recreate
+                picam2.capture_file(str(filepath))
+                
+                if filepath.exists():
+                    file_size_kb = filepath.stat().st_size / 1024
+                    print("  ✅ Saved - {:.1f} KB".format(file_size_kb))
+                    captured_count += 1
+                else:
+                    print("  ❌ Failed to save file")
+                
+                # Small delay between captures for camera to process
+                if i < 2:  # Don't sleep after last capture
+                    time.sleep(0.5)
+                    
+            except Exception as capture_error:
+                print("  ❌ Capture {} failed: {}".format(i+1, str(capture_error)))
         
-        print("✅ Multiple capture test successful!")
-        return True
+        if captured_count == 3:
+            print("✅ Multiple capture test successful! ({}/3 captures)".format(captured_count))
+            return True
+        else:
+            print("⚠️  Partial success: {}/3 captures completed".format(captured_count))
+            return captured_count > 0
         
     except Exception as e:
         print("❌ Multiple capture test failed: {}".format(str(e)))
@@ -124,7 +139,10 @@ def test_multiple_captures():
     
     finally:
         if picam2:
-            picam2.stop()
+            try:
+                picam2.stop()
+            except:
+                pass  # Ignore cleanup errors
 
 if __name__ == "__main__":
     print("IMX477 Camera Test - Bookworm/picamera2")

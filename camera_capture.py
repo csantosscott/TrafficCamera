@@ -53,10 +53,8 @@ class CameraController:
                     "AnalogueGain": 1.0,      # Minimal gain
                     "Sharpness": 1.0,         # Natural sharpness
                     "NoiseReductionMode": 2,  # High quality noise reduction
-                    # Autofocus controls for IMX477
-                    "AfMode": 2,              # Continuous autofocus
-                    "AfTrigger": 0,           # Trigger autofocus
-                    "LensPosition": 3.0       # Backup manual focus for license plates
+                    # Focus controls for IMX477 (manual focus as fallback)
+                    "LensPosition": 3.0       # Manual focus for license plates (3-10m distance)
                 }
                 print("Mode: High Quality (4056x3040)")
                 
@@ -70,10 +68,8 @@ class CameraController:
                     "ExposureTime": 5000,     # 5ms fast shutter
                     "AnalogueGain": 2.0,      # Higher gain for speed
                     "NoiseReductionMode": 0,  # No noise reduction for speed
-                    # Autofocus controls for IMX477
-                    "AfMode": 1,              # Single-shot autofocus (faster)
-                    "AfTrigger": 0,           # Trigger autofocus
-                    "LensPosition": 2.0       # Slightly closer focus for speed
+                    # Focus controls for IMX477 (manual focus as fallback)
+                    "LensPosition": 2.0       # Manual focus for closer subjects
                 }
                 print("Mode: Fast Capture (1920x1080)")
                 
@@ -89,10 +85,8 @@ class CameraController:
                     "Sharpness": 1.2,         # Enhanced sharpness for text
                     "Contrast": 1.1,          # Slightly increased contrast
                     "NoiseReductionMode": 1,  # Minimal noise reduction
-                    # Autofocus controls for IMX477 - optimized for license plates
-                    "AfMode": 2,              # Continuous autofocus
-                    "AfTrigger": 0,           # Trigger autofocus
-                    "LensPosition": 3.5       # Optimal for 3-10m license plate distance
+                    # Focus controls for IMX477 - optimized for license plates
+                    "LensPosition": 3.5       # Manual focus optimal for 3-10m license plate distance
                 }
                 print("Mode: Production (2028x1520) - Optimized for license plates")
             
@@ -109,13 +103,12 @@ class CameraController:
             print("Camera warming up and stabilizing...")
             time.sleep(2)
             
-            # Trigger initial autofocus
-            print("Triggering initial autofocus...")
-            self.picam2.set_controls({"AfTrigger": 1})  # Start autofocus
-            time.sleep(1)  # Allow focus to complete
+            # Camera is now ready with manual focus set
+            print("Camera ready with manual focus positioning...")
+            time.sleep(1)  # Allow settings to stabilize
             
             self.is_initialized = True
-            print("Camera initialized successfully with autofocus")
+            print("Camera initialized successfully with manual focus")
             print("Configuration: {}".format(still_config))
             print("Controls applied: {}".format(controls))
             return True
@@ -126,27 +119,15 @@ class CameraController:
             return False
     
     def ensure_focus(self):
-        """Ensure camera is properly focused before capture"""
+        """Ensure camera focus is ready (manual focus already set)"""
         if not self.is_initialized:
             return False
             
         try:
-            # Trigger autofocus before capture
-            self.picam2.set_controls({"AfTrigger": 1})
-            time.sleep(0.5)  # Allow autofocus to complete
-            
-            # Get focus state (if supported)
-            metadata = self.picam2.capture_metadata()
-            if "AfState" in metadata:
-                af_state = metadata["AfState"]
-                if af_state == 2:  # Focused
-                    print("📷 Focus: Locked")
-                elif af_state == 1:  # Scanning
-                    print("📷 Focus: Scanning...")
-                    time.sleep(0.5)  # Wait a bit more
-                else:
-                    print("📷 Focus: Manual/Idle")
-            
+            # Manual focus is already set via LensPosition
+            # Just ensure camera is stable
+            print("📷 Focus: Manual position set")
+            time.sleep(0.2)  # Brief stabilization
             return True
         except Exception as e:
             print("⚠️  Focus check failed: {}".format(str(e)))

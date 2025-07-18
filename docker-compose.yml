@@ -1,5 +1,3 @@
-version: '3.8'
-
 services:
   filebrowser:
     image: filebrowser/filebrowser:latest
@@ -9,16 +7,8 @@ services:
       - "8080:80"
     volumes:
       - ./photos:/srv/photos
-      - ./config:/srv/config
-      - ./src:/srv/src
-      - ./filebrowser.db:/database.db
-      - ./.filebrowser.json:/.filebrowser.json
+      - ./data:/srv/data
     environment:
       - PUID=1000
       - PGID=1000
-    # Camera device mapping for future use when camera support is added
-    # devices:
-    #   - /dev/vchiq:/dev/vchiq
-    #   - /dev/vcsm-cma:/dev/vcsm-cma
-    # privileged: true
-    command: --database /database.db --config /.filebrowser.json
+    command: --port 80 --root /srv

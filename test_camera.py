@@ -95,7 +95,7 @@ def test_multiple_captures():
         picam2.configure(still_config)
         picam2.start()
         
-        time.sleep(2)  # Warm up
+        time.sleep(3)  # Longer warm up for multiple captures
         
         for i in range(3):
             timestamp = datetime.now().strftime("%Y%m%d_%H%M%S_%f")[:-3]

@@ -28,9 +28,9 @@ sudo apt-get install -y python3-pip python3-venv python3-picamera2 libcamera-app
 echo "Creating photos directory..."
 mkdir -p photos
 
-# Create Python virtual environment
-echo "Creating Python virtual environment..."
-python3 -m venv venv
+# Create Python virtual environment with system site packages
+echo "Creating Python virtual environment with system packages access..."
+python3 -m venv venv --system-site-packages
 source venv/bin/activate
 
 # Install Python packages

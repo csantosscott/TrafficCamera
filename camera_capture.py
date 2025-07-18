@@ -30,28 +30,77 @@ class CameraController:
         self.picam2 = None
         self.is_initialized = False
         
-    def initialize(self):
-        """Initialize and configure the camera"""
+    def initialize(self, quality_mode="production"):
+        """Initialize and configure the camera
+        
+        Args:
+            quality_mode: "production", "high_quality", or "fast"
+        """
         try:
             print("Initializing camera with picamera2...")
             self.picam2 = Picamera2()
             
-            # Configure for high quality still capture
-            still_config = self.picam2.create_still_configuration(
-                main={"size": (1920, 1080)}  # 1080p for good quality and performance
-            )
+            # Configure based on quality mode
+            if quality_mode == "high_quality":
+                # Maximum quality for archival/evidence
+                still_config = self.picam2.create_still_configuration(
+                    main={"size": (4056, 3040), "format": "RGB888"},
+                    raw={"size": (4056, 3040)},
+                    buffer_count=1
+                )
+                controls = {
+                    "ExposureTime": 15000,    # 15ms for max quality
+                    "AnalogueGain": 1.0,      # Minimal gain
+                    "Sharpness": 1.0,         # Natural sharpness
+                    "NoiseReductionMode": 2   # High quality noise reduction
+                }
+                print("Mode: High Quality (4056x3040)")
+                
+            elif quality_mode == "fast":
+                # Fast capture for high-speed scenarios
+                still_config = self.picam2.create_still_configuration(
+                    main={"size": (1920, 1080), "format": "RGB888"},
+                    buffer_count=3
+                )
+                controls = {
+                    "ExposureTime": 5000,     # 5ms fast shutter
+                    "AnalogueGain": 2.0,      # Higher gain for speed
+                    "NoiseReductionMode": 0   # No noise reduction for speed
+                }
+                print("Mode: Fast Capture (1920x1080)")
+                
+            else:  # production (default)
+                # Balanced quality and performance for traffic camera
+                still_config = self.picam2.create_still_configuration(
+                    main={"size": (2028, 1520), "format": "RGB888"},
+                    buffer_count=2
+                )
+                controls = {
+                    "ExposureTime": 8000,     # 8ms - good for moving vehicles
+                    "AnalogueGain": 1.5,      # Slight gain for sensitivity
+                    "Sharpness": 1.2,         # Enhanced sharpness for text
+                    "Contrast": 1.1,          # Slightly increased contrast
+                    "NoiseReductionMode": 1   # Minimal noise reduction
+                }
+                print("Mode: Production (2028x1520) - Optimized for license plates")
+            
             self.picam2.configure(still_config)
             
             print("Starting camera...")
             self.picam2.start()
             
-            # Allow camera to warm up
-            print("Camera warming up...")
-            time.sleep(2)
+            # Apply camera controls for optimal image quality
+            print("Applying camera controls...")
+            self.picam2.set_controls(controls)
+            
+            # Allow camera to warm up and stabilize
+            print("Camera warming up and stabilizing...")
+            time.sleep(3)
             
             self.is_initialized = True
             print("Camera initialized successfully")
             print("Configuration: {}".format(still_config))
+            print("Controls applied: {}".format(controls))
             return True
             
         except Exception as e:
@@ -59,11 +108,12 @@ class CameraController:
             self.is_initialized = False
             return False
     
-    def capture_photo(self, filename_prefix="capture"):
-        """Capture a photo and save to disk
+    def capture_photo(self, filename_prefix="traffic_camera", organize_by_date=True):
+        """Capture a photo and save to disk with timestamp and optional date organization
         
         Args:
             filename_prefix: Prefix for the filename
+            organize_by_date: Create date-based subdirectories
             
         Returns:
             Path to saved photo or None if failed
@@ -73,25 +123,44 @@ class CameraController:
             return None
             
         try:
-            # Generate filename with timestamp
-            timestamp = datetime.now().strftime("%Y%m%d_%H%M%S_%f")[:-3]  # Include milliseconds
-            filename = "{}_{}.jpg".format(filename_prefix, timestamp)
-            filepath = self.photo_dir / filename
+            # Generate timestamp
+            now = datetime.now()
+            timestamp = now.strftime("%Y%m%d_%H%M%S_%f")[:-3]  # Include milliseconds
+            
+            # Create date-based directory structure if requested
+            if organize_by_date:
+                date_dir = self.photo_dir / now.strftime("%Y") / now.strftime("%m") / now.strftime("%d")
+                date_dir.mkdir(parents=True, exist_ok=True)
+                save_dir = date_dir
+            else:
+                save_dir = self.photo_dir
+            
+            # Generate filename with enhanced timestamp format
+            # Format: prefix_YYYYMMDD_HHMMSS_mmm.jpg
+            filename = "{}_{}_{}.jpg".format(
+                filename_prefix,
+                now.strftime("%Y%m%d"),
+                now.strftime("%H%M%S_%f")[:-3]  # Include milliseconds
+            )
+            filepath = save_dir / filename
             
             # Capture the photo using picamera2
+            print("Capturing: {}".format(filename))
             self.picam2.capture_file(str(filepath))
             
-            # Verify file was created
+            # Verify file was created and get metadata
             if filepath.exists():
                 file_size_kb = filepath.stat().st_size / 1024
-                print("Photo captured: {} ({:.1f} KB)".format(filename, file_size_kb))
+                relative_path = filepath.relative_to(self.photo_dir)
+                print("✅ Photo captured: {} ({:.1f} KB)".format(relative_path, file_size_kb))
+                print("   Full path: {}".format(filepath))
                 return filepath
             else:
-                print("Error: Photo file not created")
+                print("❌ Error: Photo file not created")
                 return None
                 
         except Exception as e:
-            print("Error capturing photo: {}".format(str(e)))
+            print("❌ Error capturing photo: {}".format(str(e)))
             return None
     
     def capture_burst(self, count=3, delay=0.5, filename_prefix="burst"):
@@ -134,27 +203,52 @@ class CameraController:
                 print("Error during cleanup: {}".format(str(e)))
 
 def main():
-    """Simple single photo capture for production use"""
+    """Enhanced single photo capture with quality options"""
+    import sys
+    
+    # Check for quality mode argument
+    quality_mode = "production"  # default
+    if len(sys.argv) > 1:
+        mode = sys.argv[1].lower()
+        if mode in ["production", "high_quality", "fast"]:
+            quality_mode = mode
+        else:
+            print("Usage: python3 camera_capture.py [production|high_quality|fast]")
+            print("Defaulting to production mode...")
+    
     camera = CameraController()
     
     try:
-        # Initialize camera
-        if not camera.initialize():
+        # Initialize camera with specified quality mode
+        print("=== Traffic Camera Enhanced Capture ===")
+        if not camera.initialize(quality_mode=quality_mode):
             print("Failed to initialize camera")
             return
         
-        # Single photo capture
-        print("\nCapturing photo...")
-        photo_path = camera.capture_photo("traffic_camera")
-        if photo_path:
-            print("Photo saved to: {}".format(photo_path))
-            print("View in FileBrowser at: http://<pi-ip>:8080")
-        else:
-            print("Photo capture failed")
+        # Single photo capture with date organization
+        print("\nCapturing photo with enhanced settings...")
+        photo_path = camera.capture_photo("traffic_camera", organize_by_date=True)
         
+        if photo_path:
+            print("\n🎉 Capture successful!")
+            print("📁 View in FileBrowser at: http://<pi-ip>:8080")
+            print("📋 Quality mode: {}".format(quality_mode))
+            
+            # Show directory structure
+            relative_path = photo_path.relative_to(Path("photos"))
+            print("📂 Organized path: photos/{}".format(relative_path))
+        else:
+            print("\n❌ Photo capture failed")
+            return 1
+        
+    except KeyboardInterrupt:
+        print("\n⏹️  Capture interrupted by user")
+        return 1
     finally:
         # Always cleanup
         camera.cleanup()
+    
+    return 0
 
 if __name__ == "__main__":
-    main()
+    exit(main())

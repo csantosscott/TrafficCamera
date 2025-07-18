@@ -40,26 +40,28 @@ def check_picamera2_status():
     """Check picamera2 library availability"""
     print("\n=== picamera2 Status ===")
     
-    # Test picamera2 import in system python
-    test_system = run_command("python3 -c 'import picamera2; print(\"System picamera2:\", picamera2.__version__)' 2>/dev/null || echo 'System import failed'")
-    if "System import failed" not in test_system:
-        print("✅ System picamera2 available")
-        print(test_system)
-    else:
-        print("❌ System picamera2 not available")
-        print("Install with: sudo apt install python3-picamera2")
-    
-    # Test picamera2 import in venv if it exists
-    venv_dir = Path("venv")
-    if venv_dir.exists():
-        print("\nTesting venv picamera2...")
-        venv_test = run_command("source venv/bin/activate && python3 -c 'import picamera2; print(\"venv picamera2:\", picamera2.__version__)' 2>/dev/null || echo 'venv import failed'")
-        if "venv import failed" not in venv_test:
-            print("✅ venv picamera2 available")
-            print(venv_test)
+    # Test picamera2 the same way our scripts do
+    try:
+        from picamera2 import Picamera2
+        import picamera2
+        print("✅ picamera2 successfully imported in diagnostics")
+        print("Version: {}".format(picamera2.__version__))
+        print("Location: {}".format(picamera2.__file__))
+        return True
+    except ImportError as e:
+        print("❌ picamera2 import failed in diagnostics: {}".format(e))
+        
+        # Test system python separately
+        test_system = run_command("python3 -c 'import picamera2; print(picamera2.__version__, picamera2.__file__)' 2>/dev/null || echo 'failed'")
+        if "failed" not in test_system:
+            print("✅ But system python3 can import picamera2:")
+            print("  {}".format(test_system))
+            print("  This suggests a Python environment mismatch")
         else:
-            print("❌ venv picamera2 not available")
-            print("Note: picamera2 requires system packages, use --system-site-packages")
+            print("❌ System python3 also can't import picamera2")
+            print("Install with: sudo apt install python3-picamera2")
+        
+        return False
 
 def check_gpu_memory():
     """Check GPU memory split"""

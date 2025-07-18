@@ -40,14 +40,26 @@ def check_picamera2_status():
     """Check picamera2 library availability"""
     print("\n=== picamera2 Status ===")
     
-    # Test picamera2 import
-    test_import = run_command("python3 -c 'import picamera2; print(\"picamera2 version:\", picamera2.__version__)' 2>/dev/null || echo 'Import failed'")
-    if "Import failed" not in test_import:
-        print("✅ picamera2 library available")
-        print(test_import)
+    # Test picamera2 import in system python
+    test_system = run_command("python3 -c 'import picamera2; print(\"System picamera2:\", picamera2.__version__)' 2>/dev/null || echo 'System import failed'")
+    if "System import failed" not in test_system:
+        print("✅ System picamera2 available")
+        print(test_system)
     else:
-        print("❌ picamera2 library not available")
+        print("❌ System picamera2 not available")
         print("Install with: sudo apt install python3-picamera2")
+    
+    # Test picamera2 import in venv if it exists
+    venv_dir = Path("venv")
+    if venv_dir.exists():
+        print("\nTesting venv picamera2...")
+        venv_test = run_command("source venv/bin/activate && python3 -c 'import picamera2; print(\"venv picamera2:\", picamera2.__version__)' 2>/dev/null || echo 'venv import failed'")
+        if "venv import failed" not in venv_test:
+            print("✅ venv picamera2 available")
+            print(venv_test)
+        else:
+            print("❌ venv picamera2 not available")
+            print("Note: picamera2 requires system packages, use --system-site-packages")
 
 def check_gpu_memory():
     """Check GPU memory split"""
@@ -62,7 +74,13 @@ def check_gpu_memory():
             print("✅ GPU memory sufficient ({} MB)".format(mem_value))
         else:
             print("⚠️  GPU memory low ({} MB). Recommended: 128 MB+".format(mem_value))
-            print("To fix: Add 'gpu_mem=128' to /boot/firmware/config.txt and reboot")
+            print("To fix GPU memory:")
+            print("  1. sudo nano /boot/firmware/config.txt")
+            print("  2. Add or modify: gpu_mem=128")
+            print("  3. Save and reboot: sudo reboot")
+            print("  4. Verify with: vcgencmd get_mem gpu")
+            return False
+    return True
     
 def check_memory():
     """Check system memory"""

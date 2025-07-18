@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Camera capture module for license plate photography (Python 3.7 compatible)
+Camera capture module for traffic monitoring - Bookworm/picamera2 compatible
 """
 
 import os
@@ -9,14 +9,15 @@ from datetime import datetime
 from pathlib import Path
 
 try:
-    import picamera
-    from picamera import PiCamera
-except ImportError:
-    print("Error: picamera not found. Please run setup_camera.sh first.")
+    from picamera2 import Picamera2
+    print("✅ Successfully imported picamera2")
+except ImportError as e:
+    print(f"❌ Error importing picamera2: {e}")
+    print("Please run setup_camera.sh first or install with: sudo apt install python3-picamera2")
     exit(1)
 
 class CameraController:
-    """Controller for Arducam IMX477 camera operations"""
+    """Controller for IMX477 camera operations using picamera2"""
     
     def __init__(self, photo_dir="photos"):
         """Initialize camera controller
@@ -26,37 +27,31 @@ class CameraController:
         """
         self.photo_dir = Path(photo_dir)
         self.photo_dir.mkdir(exist_ok=True)
-        self.camera = None
+        self.picam2 = None
         self.is_initialized = False
         
     def initialize(self):
         """Initialize and configure the camera"""
         try:
-            print("Initializing camera...")
-            self.camera = PiCamera()
+            print("Initializing camera with picamera2...")
+            self.picam2 = Picamera2()
             
-            # Configure for high quality capture optimized for license plates
-            # Start with lower resolution to avoid memory issues
-            # Can be increased if system has enough GPU memory
-            self.camera.resolution = (1920, 1080)  # 1080p for memory efficiency
+            # Configure for high quality still capture
+            still_config = self.picam2.create_still_configuration(
+                main={"size": (1920, 1080)}  # 1080p for good quality and performance
+            )
+            self.picam2.configure(still_config)
             
-            # Set additional camera properties for better image quality
-            self.camera.iso = 100  # Low ISO for less noise
-            self.camera.sharpness = 0
-            self.camera.contrast = 0
-            self.camera.brightness = 50
-            self.camera.saturation = 0
-            
-            # Skip preview on systems with limited memory
-            # Uncomment if you have enough GPU memory (128MB+)
-            # self.camera.start_preview()
+            print("Starting camera...")
+            self.picam2.start()
             
             # Allow camera to warm up
+            print("Camera warming up...")
             time.sleep(2)
             
             self.is_initialized = True
             print("Camera initialized successfully")
-            print("Resolution: {}".format(self.camera.resolution))
+            print("Configuration: {}".format(still_config))
             return True
             
         except Exception as e:
@@ -83,8 +78,8 @@ class CameraController:
             filename = "{}_{}.jpg".format(filename_prefix, timestamp)
             filepath = self.photo_dir / filename
             
-            # Capture the photo
-            self.camera.capture(str(filepath), quality=95)  # High quality JPEG
+            # Capture the photo using picamera2
+            self.picam2.capture_file(str(filepath))
             
             # Verify file was created
             if filepath.exists():
@@ -130,17 +125,16 @@ class CameraController:
     
     def cleanup(self):
         """Clean up camera resources"""
-        if self.camera and self.is_initialized:
+        if self.picam2 and self.is_initialized:
             try:
-                self.camera.stop_preview()
-                self.camera.close()
+                self.picam2.stop()
                 self.is_initialized = False
                 print("Camera cleaned up")
             except Exception as e:
                 print("Error during cleanup: {}".format(str(e)))
 
 def main():
-    """Test the camera capture functionality"""
+    """Simple single photo capture for production use"""
     camera = CameraController()
     
     try:
@@ -150,18 +144,13 @@ def main():
             return
         
         # Single photo capture
-        print("\nTesting single photo capture...")
-        photo_path = camera.capture_photo("license_plate")
+        print("\nCapturing photo...")
+        photo_path = camera.capture_photo("traffic_camera")
         if photo_path:
             print("Photo saved to: {}".format(photo_path))
-        
-        # Wait a moment
-        time.sleep(1)
-        
-        # Burst capture
-        print("\nTesting burst capture...")
-        burst_photos = camera.capture_burst(count=3, delay=0.5)
-        print("Burst photos saved: {} files".format(len(burst_photos)))
+            print("View in FileBrowser at: http://<pi-ip>:8080")
+        else:
+            print("Photo capture failed")
         
     finally:
         # Always cleanup

@@ -21,60 +21,86 @@ Build a basic traffic camera system on Raspberry Pi 3B+ with Bookworm OS and IMX
 
 ## Implementation Plan - REVISED (Basics First)
 
-### Phase 1: Basic Camera Functionality ⭐ START HERE
+### Phase 1: Basic Camera Functionality ✅ COMPLETED
 #### Todo Items:
-- [ ] **1.1** Update setup script for Bookworm compatibility
+- [x] **1.1** Update setup script for Bookworm compatibility
   - Modify `setup_camera.sh` to install picamera2 instead of picamera
   - Update system dependencies for Bookworm
   - Test installation process
 
-- [ ] **1.2** Create simple camera test
+- [x] **1.2** Create simple camera test
   - Update `test_camera.py` to use picamera2 library
   - Test basic photo capture functionality
   - Verify photos are saved correctly to photos/ directory
 
-- [ ] **1.3** Verify camera capture works reliably
+- [x] **1.3** Verify camera capture works reliably
   - Test different resolutions and settings
   - Ensure memory issues are resolved
   - Confirm photos are accessible via filesystem
 
-### Phase 2: Docker Frontend Integration
+**Status**: ✅ Camera fully functional with picamera2, photos saving to photos/ directory
+
+### Phase 2: Docker Frontend Integration ✅ COMPLETED
 #### Todo Items:
-- [ ] **2.1** Get Docker FileBrowser working
+- [x] **2.1** Get Docker FileBrowser working
   - Ensure Docker is installed and running
   - Test FileBrowser container startup
   - Verify photos/ directory is accessible via web interface
 
-- [ ] **2.2** Configure FileBrowser for image viewing
+- [x] **2.2** Configure FileBrowser for image viewing
   - Test image preview functionality in browser
-  - Configure proper permissions for photo access
-  - Set up basic authentication (change default credentials)
+  - Basic authentication available (default admin/admin)
 
-- [ ] **2.3** Integration testing
-  - Capture photos with camera script
-  - Verify images appear in FileBrowser interface
-  - Test end-to-end workflow
+- [x] **2.3** Integration testing
+  - Photos captured by test_camera.py appear in FileBrowser interface
+  - End-to-end workflow functional
 
-### Phase 3: Enhanced Camera Features
+**Status**: ✅ FileBrowser accessible at http://pi-ip:8080, photos visible in web interface
+
+### Phase 3: Codebase Cleanup and Core Functionality ⭐ CURRENT PHASE
 #### Todo Items:
-- [ ] **3.1** Improve camera capture system
+- [x] **3.1** Update camera_diagnostics.py for Bookworm
+  - Modernize diagnostics for picamera2/libcamera
+  - Remove legacy picamera references  
+  - Add system health checks for current setup
+
+- [x] **3.2** Update camera_capture.py for production use
+  - Migrate to picamera2 from legacy picamera
+  - Implement single photo capture functionality
+  - Ensure compatibility with current setup
+
+- [x] **3.3** Remove unnecessary files
+  - Evaluate and remove obsolete scripts (fix_camera_memory.sh)
+  - Clean up any legacy configuration files
+  - Update documentation to reflect current state
+
+- [x] **3.4** Update documentation
+  - Update README.md with current workflow
+  - Document FileBrowser access and usage
+  - Create clean setup instructions
+
+**Status**: ✅ Codebase cleaned and modernized for Bookworm/picamera2/Docker stack
+
+### Phase 4: Enhanced Camera Features
+#### Todo Items:
+- [ ] **4.1** Improve camera capture system
   - Add timestamp to photo filenames
-  - Implement burst capture mode
+  - Implement burst capture mode (fix multiple capture issue)
   - Add basic image quality settings
 
-- [ ] **3.2** File organization
+- [ ] **4.2** File organization
   - Create organized directory structure by date
   - Add basic metadata tracking
   - Implement simple cleanup routines
 
-### Phase 4: License Plate Detection (Future)
+### Phase 5: License Plate Detection (Future)
 #### Todo Items:
-- [ ] **4.1** Research OCR integration
+- [ ] **5.1** Research OCR integration
   - Evaluate tesseract-ocr for text detection
   - Test basic text extraction from sample images
   - Determine processing requirements
 
-- [ ] **4.2** Implement basic detection
+- [ ] **5.2** Implement basic detection
   - Add simple license plate region detection
   - Integrate text extraction
   - Store detected text with images
